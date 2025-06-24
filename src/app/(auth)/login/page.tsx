@@ -1,52 +1,78 @@
 'use client'
 
-import { useState } from "react";
+// import { useEffect} from "react";
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation";
+import { useUser } from "@/context/UserContext";
+import { User } from "@/constants/types";
 
-type User = {
-  email: string;
-  password: string;
-}
+const loginSchema = z.object({
+  email: z.string().email("Email inválido"),
+  password: z.string().min(4, "Senha muito curta"),
+})
+
+type LoginData = z.infer<typeof loginSchema>
 
 export default function Login() {
-  const [email, setEmail] = useState<string>("")
-  const [password, setPassword] = useState<string>("")
-  
+  const { login } = useUser()
   const router = useRouter()
-  
-  const handleLogin = (e: any) => {
-    e.preventDefault()
-    const users: User[] = JSON.parse(localStorage.getItem("users") || "[]") //as User
-    const user = users.find(u => u.email === email && u.password === password)
-    
+
+  const {
+    register,
+    handleSubmit,
+    formState: {errors},
+  } = useForm<LoginData>({
+    resolver: zodResolver(loginSchema)
+  })
+
+  const onSubmit = (data: LoginData) => {
+    const users: User[] = JSON.parse(localStorage.getItem("users") || "[]")
+    const user = users.find(u => u.email === data.email && u.password === data.password)
+
     if (user){
-      alert("Logado") // isso é
-      localStorage.setItem("loggedUser", JSON.stringify(user)) //o mesmo que isso
+      login({name: user.name || "Usuário", email: user.email})
+      localStorage.setItem("loggedUser", JSON.stringify(user)) 
+      alert("Logado")
       router.push("/")
     } else {
       alert('Credenciais inválidas')
     }
   }
 
+  // useEffect(() => {
+  //   const saved = localStorage.getItem("loggedUser")
+  //   if (saved){
+  //     const parsed: User = JSON.parse(saved)
+  //     login({name: parsed.name || "Usuário", email: parsed.email})
+  //   }
+  // }, [login])
+
+
   return (
     <main className="flex items-center justify-center bg-blue-950 p-6">
       <div className="w-full shadow-xl bg-blue-800">
         <h2 className="justify-center text-2xl">Login</h2>
-        <form onSubmit={handleLogin} className="space-y-4 mt-4">
-          <input 
-            type="email" 
-            placeholder="Email"
-            className="w-full"
-            value={email}
-            onChange={e => setEmail(e.target.value)} 
-          />
-          <input 
-            type="password" 
-            placeholder="Sua senha"
-            className="w-full"
-            value={password}
-            onChange={e => setPassword(e.target.value)} 
-          />
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+          <div>
+            <input 
+              type="email" 
+              placeholder="Email"
+              className="w-full"
+              {...register("email", {required: true})}
+            />
+            {errors.email && <p>{errors.email.message}</p>}
+          </div>
+          <div>
+            <input 
+              type="password" 
+              placeholder="Sua senha"
+              className="w-full"
+              {...register("password", {required: true})}
+            />
+            {errors.password && <p>{errors.password.message}</p>}
+          </div>
           <button type="submit">Entrar</button>
         </form>
       </div>

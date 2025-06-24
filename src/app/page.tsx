@@ -1,10 +1,8 @@
-
-export default async function Home() {
-  const {login} = await fetch("https://api.github.com/users/opsrennerdev")
-    .then((res) => res.json())
-
-  // https://github.com/opsrennerdev.png
+export default function Home() {
   return (
-    <h1>{login}</h1>
+    <div className="text-center p-6">
+      <h1 className="text-4xl font-bold mb-4">Bem-vindo à Aula 05</h1>
+      <p className="text-lg text-gray-600">Explore as páginas do site usando o menu acima.</p>
+    </div>
   );
 }
